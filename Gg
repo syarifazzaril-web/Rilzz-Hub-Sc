@@ -237,15 +237,8 @@ New("UICorner",{CornerRadius=UDim.new(0,16),Parent=topbar})
 New("Frame",{Size=UDim2.new(1,0,0.5,0),Position=UDim2.new(0,0,0.5,0),
 	BackgroundColor3=T.Surface,BackgroundTransparency=0.1,BorderSizePixel=0,ZIndex=2,Parent=topbar})
 
-local gline = New("Frame",{
-	Size=UDim2.new(1,0,0,2),BackgroundColor3=T.Accent,BorderSizePixel=0,ZIndex=3,Parent=topbar
-})
-New("UICorner",{CornerRadius=UDim.new(0,1),Parent=gline})
-New("UIGradient",{Color=ColorSequence.new({
-	ColorSequenceKeypoint.new(0,   T.Accent2),
-	ColorSequenceKeypoint.new(0.45,T.Accent),
-	ColorSequenceKeypoint.new(1,   T.Teal),
-}), Parent=gline})
+-- gline dihapus (sesuai permintaan)
+local gline = New("Frame",{Size=UDim2.new(0,0,0,0),BackgroundTransparency=1,Parent=topbar})
 
 -- Logo R di topbar (kiri)
 local topLogoR = MakeRLogo(topbar, 30, 3)
@@ -277,8 +270,285 @@ local pingBadge = New("Frame",{
 })
 New("UICorner",{CornerRadius=UDim.new(1,0),Parent=pingBadge})
 New("UIStroke",{Color=T.Border,Thickness=1,Parent=pingBadge})
-New("Frame",{Size=UDim2.new(0,6,0,6),Position=UDim2.new(0,7,0.5,-3),
+
+local pingDotF = New("Frame",{Size=UDim2.new(0,6,0,6),Position=UDim2.new(0,7,0.5,-3),
 	BackgroundColor3=T.Success,BorderSizePixel=0,ZIndex=4,Parent=pingBadge})
+New("UICorner",{CornerRadius=UDim.new(1,0),Parent=pingDotF})
+New("TextLabel",{Size=UDim2.new(1,-16,1,0),Position=UDim2.new(0,16,0,0),
+	BackgroundTransparency=1,Text="24ms",TextColor3=T.Success,TextSize=9,Font=Enum.Font.Code,
+	TextXAlignment=Enum.TextXAlignment.Left,ZIndex=4,Parent=pingBadge})
+
+-- Window buttons
+local function winBtn(xOff, col, sym)
+	local f = New("Frame",{
+		Size=UDim2.new(0,22,0,22),Position=UDim2.new(1,xOff,0.5,-11),
+		BackgroundColor3=col,BackgroundTransparency=0.7,BorderSizePixel=0,ZIndex=3,Parent=topbar
+	})
+	New("UICorner",{CornerRadius=UDim.new(1,0),Parent=f})
+	local lbl = New("TextLabel",{
+		Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text=sym,TextColor3=col,
+		TextSize=11,Font=Enum.Font.GothamBold,TextTransparency=0.5,ZIndex=4,Parent=f
+	})
+	local btn = New("TextButton",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text="",ZIndex=5,Parent=f})
+	btn.MouseEnter:Connect(function()
+		Tween(f,{BackgroundTransparency=0.05},0.12)
+		Tween(lbl,{TextTransparency=0},0.12)
+	end)
+	btn.MouseLeave:Connect(function()
+		Tween(f,{BackgroundTransparency=0.7},0.12)
+		Tween(lbl,{TextTransparency=0.5},0.12)
+	end)
+	return btn, f
+end
+
+local closeBtn, closeBtnF = winBtn(-34, T.Danger, "✕")
+local minBtn,   minBtnF   = winBtn(-62, T.Warn,   "─")
+
+-- ══════════════════════════════════════════════════════════
+--  MINIMIZED PILL  (gaya dari gambar: drag icon | R logo | nama GUI)
+-- ══════════════════════════════════════════════════════════
+local pill = New("Frame",{
+	Size=UDim2.new(0,210,0,42),
+	Position=UDim2.new(0.5,-105,0,-60),
+	BackgroundColor3=Color3.fromRGB(8,10,20),
+	BackgroundTransparency=0.25,
+	BorderSizePixel=0,Visible=false,Parent=gui
+})
+New("UICorner",{CornerRadius=UDim.new(0,14),Parent=pill})
+local pillStroke = New("UIStroke",{Color=T.Accent,Thickness=2,Transparency=0,Parent=pill})
+
+New("ImageLabel",{
+	Size=UDim2.new(1,24,1,24),Position=UDim2.new(0,-12,0,-10),
+	BackgroundTransparency=1,Image="rbxassetid://6014261993",
+	ImageColor3=Color3.fromRGB(0,0,0),ImageTransparency=0.55,
+	ScaleType=Enum.ScaleType.Slice,SliceCenter=Rect.new(49,49,450,450),
+	ZIndex=-1,Parent=pill
+})
+
+-- (pillLine dihapus)
+local pillLine = New("Frame",{Size=UDim2.new(0,0,0,0),BackgroundTransparency=1,Parent=pill})
+
+-- Drag icon kiri (⊕) persis seperti gambar
+New("TextLabel",{
+	Size=UDim2.new(0,36,1,0),Position=UDim2.new(0,0,0,0),
+	BackgroundTransparency=1,Text="⊕",TextColor3=T.Muted,TextSize=18,
+	Font=Enum.Font.GothamBold,ZIndex=3,Parent=pill
+})
+
+-- Garis separator vertikal
+New("Frame",{Size=UDim2.new(0,1,0.55,0),Position=UDim2.new(0,38,0.225,0),
+	BackgroundColor3=T.Border,BorderSizePixel=0,ZIndex=3,Parent=pill})
+
+-- Logo R di pill
+local pillLogoR = MakeRLogo(pill, 24, 3)
+pillLogoR.Position = UDim2.new(0,44,0.5,-12)
+
+-- Teks nama GUI
+New("TextLabel",{
+	Size=UDim2.new(1,-76,1,0),Position=UDim2.new(0,74,0,0),
+	BackgroundTransparency=1,Text="RilzHub",
+	TextColor3=T.Text,TextSize=13,Font=Enum.Font.GothamBlack,
+	TextXAlignment=Enum.TextXAlignment.Left,ZIndex=3,Parent=pill
+})
+
+-- Pill drag - pakai dragIcon area kiri saja
+local pillDrag = false
+local pillStartM = Vector2.new(0,0)
+local pillStartP = UDim2.new(0,0,0,0)
+local pillMoved = false
+
+local dragIcon = New("TextButton",{
+	Size=UDim2.new(0,44,1,0),Position=UDim2.new(0,0,0,0),
+	BackgroundTransparency=1,Text="",ZIndex=11,Parent=pill
+})
+
+dragIcon.InputBegan:Connect(function(i)
+	if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+		pillDrag = true
+		pillMoved = false  -- reset di InputBegan
+		pillStartM = Vector2.new(i.Position.X, i.Position.Y)
+		pillStartP = pill.Position
+	end
+end)
+UserInputService.InputEnded:Connect(function(i)
+	if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+		pillDrag = false
+		task.delay(0.05, function() pillMoved = false end)
+	end
+end)
+UserInputService.InputChanged:Connect(function(i)
+	if pillDrag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+		local cur = Vector2.new(i.Position.X, i.Position.Y)
+		local d = cur - pillStartM
+		if d.Magnitude >= 10 then
+			pillMoved = true
+			pill.Position = UDim2.new(0, pillStartP.X.Offset+d.X, 0, pillStartP.Y.Offset+d.Y)
+		end
+	end
+end)
+
+-- ── MINIMIZE / EXPAND ─────────────────────────────────────
+local minimized = false
+
+local function doMinimize()
+	minimized = true
+	win.Visible = false
+	-- Reset blur saat minimize
+	local Lighting = game:GetService("Lighting")
+	local be = Lighting:FindFirstChildOfClass("BlurEffect")
+	if be then be.Size = 0 end
+	pill.Position = UDim2.new(0.5,-105,0,-50)
+	pill.Size   = UDim2.new(0,0,0,42)
+	pill.BackgroundTransparency = 1
+	pill.Visible = true
+	Tween(pill, {Size=UDim2.new(0,210,0,42), BackgroundTransparency=0.25, Position=UDim2.new(0.5,-105,0,6)}, 0.32, Enum.EasingStyle.Back)
+end
+
+local function doExpand()
+	minimized = false
+	pill.Visible = false
+	win.Size    = UDim2.new(0,580,0,0)
+	win.Visible = true
+	Tween(win, {Size=UDim2.new(0,580,0,415)}, 0.35, Enum.EasingStyle.Back)
+end
+
+minBtn.MouseButton1Click:Connect(function()
+	if not dragMoved then
+		dragMoved = false
+		doMinimize()
+	end
+end)
+
+-- pillBtn expand area (kanan dari drag icon)
+local pillBtn = New("TextButton",{
+	Size=UDim2.new(1,-44,1,0),Position=UDim2.new(0,44,0,0),
+	BackgroundTransparency=1,Text="",ZIndex=10,Parent=pill
+})
+pillBtn.MouseButton1Click:Connect(function()
+	if not pillMoved then
+		pillMoved = false
+		doExpand()
+	end
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+	if dragMoved then return end
+	local Lighting = game:GetService("Lighting")
+	local be = Lighting:FindFirstChildOfClass("BlurEffect")
+	if be then be.Size = 0 end
+	Tween(win,{Size=UDim2.new(0,580,0,0),BackgroundTransparency=1},0.22)
+	task.delay(0.25, function() gui:Destroy() end)
+end)
+
+UserInputService.InputBegan:Connect(function(i,p)
+	if p then return end
+	if i.KeyCode == Enum.KeyCode.RightShift then
+		if minimized then doExpand() else doMinimize() end
+	end
+end)
+
+-- ── DRAG window ───────────────────────────────────────────
+local drag = false
+local dragMoved = false
+local startM = Vector2.new(0,0)
+local startP = UDim2.new(0,0,0,0)
+
+topbar.InputBegan:Connect(function(i)
+	if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+		drag = true
+		dragMoved = false  -- reset di sini, bukan di InputEnded
+		startM = Vector2.new(i.Position.X, i.Position.Y)
+		startP = win.Position
+	end
+end)
+UserInputService.InputEnded:Connect(function(i)
+	if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+		drag = false
+		-- Delay reset dragMoved supaya click handler sempat cek nilainya dulu
+		task.delay(0.05, function() dragMoved = false end)
+	end
+end)
+UserInputService.InputChanged:Connect(function(i)
+	if drag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+		local cur = Vector2.new(i.Position.X, i.Position.Y)
+		local d = cur - startM
+		if d.Magnitude >= 10 then
+			dragMoved = true
+			win.Position = UDim2.new(0, startP.X.Offset+d.X, 0, startP.Y.Offset+d.Y)
+		end
+	end
+end)
+
+-- ═══════════════════════════════════════════════════════════
+--  SIDEBAR
+-- ═══════════════════════════════════════════════════════════
+local sidebar = New("Frame",{
+	Size=UDim2.new(0,148,1,-54),Position=UDim2.new(0,0,0,54),
+	BackgroundColor3=T.Surface,BackgroundTransparency=0.1,
+	BorderSizePixel=0,ZIndex=2,Parent=win
+})
+New("UICorner",{CornerRadius=UDim.new(0,16),Parent=sidebar})
+New("Frame",{Size=UDim2.new(0.5,0,0.5,0),Position=UDim2.new(0.5,0,0,0),
+	BackgroundColor3=T.Surface,BackgroundTransparency=0.1,BorderSizePixel=0,ZIndex=2,Parent=sidebar})
+New("Frame",{Size=UDim2.new(1,0,0.5,0),
+	BackgroundColor3=T.Surface,BackgroundTransparency=0.1,BorderSizePixel=0,ZIndex=2,Parent=sidebar})
+New("Frame",{Size=UDim2.new(0,1,1,0),Position=UDim2.new(1,-1,0,0),
+	BackgroundColor3=T.Border,BorderSizePixel=0,ZIndex=3,Parent=sidebar})
+
+-- User card sidebar
+local userCard = New("Frame",{
+	Size=UDim2.new(1,-14,0,58),Position=UDim2.new(0,7,1,-65),
+	BackgroundColor3=T.Surface2,BorderSizePixel=0,ZIndex=3,Parent=sidebar
+})
+New("UICorner",{CornerRadius=UDim.new(0,12),Parent=userCard})
+New("UIStroke",{Color=T.Border,Thickness=1,Parent=userCard})
+
+local ucAv = New("Frame",{
+	Size=UDim2.new(0,32,0,32),Position=UDim2.new(0,10,0.5,-16),
+	BackgroundColor3=T.Accent2,BorderSizePixel=0,ZIndex=4,Parent=userCard
+})
+New("UICorner",{CornerRadius=UDim.new(1,0),Parent=ucAv})
+New("UIGradient",{Color=ColorSequence.new({
+	ColorSequenceKeypoint.new(0,T.Accent2),ColorSequenceKeypoint.new(1,T.Accent)
+}), Rotation=135,Parent=ucAv})
+New("UIStroke",{Color=T.BorderHi,Thickness=1.5,Parent=ucAv})
+
+local ok2, url2 = pcall(function()
+	return Players:GetUserThumbnailAsync(LocalPlayer.UserId,
+		Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
+end)
+if ok2 and url2 then
+	local img2 = New("ImageLabel",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Image=url2,ZIndex=5,Parent=ucAv})
+	New("UICorner",{CornerRadius=UDim.new(1,0),Parent=img2})
+else
+	New("TextLabel",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,
+		Text=string.sub(LocalPlayer.Name,1,1):upper(),
+		TextColor3=T.White,TextSize=14,Font=Enum.Font.GothamBold,ZIndex=5,Parent=ucAv})
+end
+
+local onDot2 = New("Frame",{
+	Size=UDim2.new(0,8,0,8),Position=UDim2.new(0,30,0.5,-2),
+	BackgroundColor3=T.Success,BorderSizePixel=0,ZIndex=5,Parent=userCard
+})
+New("UICorner",{CornerRadius=UDim.new(1,0),Parent=onDot2})
+New("UIStroke",{Color=T.Surface2,Thickness=1.5,Parent=onDot2})
+
+New("TextLabel",{
+	Size=UDim2.new(1,-50,0,16),Position=UDim2.new(0,48,0,9),
+	BackgroundTransparency=1,Text=LocalPlayer.Name,
+	TextColor3=T.Text,TextSize=11,Font=Enum.Font.GothamBold,
+	TextXAlignment=Enum.TextXAlignment.Left,ZIndex=4,Parent=userCard
+})
+New("TextLabel",{
+	Size=UDim2.new(1,-50,0,13),Position=UDim2.new(0,48,0,26),
+	BackgroundTransparency=1,Text="PREMIUM  ·  ACTIVE",
+	TextColor3=T.Muted,TextSize=8,Font=Enum.Font.Code,
+	TextXAlignment=Enum.TextXAlignment.Left,ZIndex=4,Parent=userCard
+})
+
+-- Tab scroll
+local tabScroll = New("ScrollingFrame",{
+	Size=UDim2.new(1,0,1,-74)ccess,BorderSizePixel=0,ZIndex=4,Parent=pingBadge})
 	:FindFirstChildOfClass("UICorner") or New("UICorner",{CornerRadius=UDim.new(1,0),
 	Parent=pingBadge:FindFirstChild("Frame") or pingBadge})
 local pingDotF = New("Frame",{Size=UDim2.new(0,6,0,6),Position=UDim2.new(0,7,0.5,-3),
