@@ -1,1 +1,1027 @@
 
+-- RilzHub UI Library v2.0
+-- LocalScript di StarterPlayerScripts
+
+local Players          = game:GetService("Players")
+local TweenService     = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService       = game:GetService("RunService")
+local CoreGui          = game:GetService("CoreGui")
+local LocalPlayer      = Players.LocalPlayer
+
+local RilzHub = {}
+RilzHub.__index = RilzHub
+
+local function Tween(obj, props, t, style, dir)
+	TweenService:Create(obj, TweenInfo.new(t or 0.2,
+		style or Enum.EasingStyle.Quart,
+		dir   or Enum.EasingDirection.Out), props):Play()
+end
+
+local function New(class, props)
+	local o = Instance.new(class)
+	for k,v in pairs(props or {}) do
+		if k ~= "Parent" then o[k] = v end
+	end
+	if props and props.Parent then o.Parent = props.Parent end
+	return o
+end
+
+-- ── THEME (default biru) ──────────────────────────────────
+local T = {
+	Bg       = Color3.fromRGB(6,  8,  16),
+	Surface  = Color3.fromRGB(11, 15, 28),
+	Surface2 = Color3.fromRGB(16, 22, 40),
+	Surface3 = Color3.fromRGB(20, 28, 50),
+	Border   = Color3.fromRGB(35, 55, 100),
+	BorderHi = Color3.fromRGB(60, 100, 180),
+	Accent   = Color3.fromRGB(60,  140, 255),
+	Accent2  = Color3.fromRGB(110, 60,  240),
+	Teal     = Color3.fromRGB(0,   215, 190),
+	Text     = Color3.fromRGB(220, 232, 252),
+	Muted    = Color3.fromRGB(80,  100, 145),
+	Success  = Color3.fromRGB(6,   210, 155),
+	Warn     = Color3.fromRGB(255, 200, 80),
+	Danger   = Color3.fromRGB(255, 70,  100),
+	White    = Color3.fromRGB(255, 255, 255),
+	PillBorder = Color3.fromRGB(60, 140, 255), -- default biru
+}
+
+-- ── LOGO "R" bergaya tajam (mirip foto yang dikirim) ──────
+local function MakeRLogo(parent, size, zindex)
+	local frame = New("Frame",{
+		Size=UDim2.new(0,size,0,size),
+		BackgroundColor3=Color3.fromRGB(0,0,0),
+		BorderSizePixel=0, ZIndex=zindex or 3, Parent=parent
+	})
+	New("UICorner",{CornerRadius=UDim.new(0,4),Parent=frame})
+	local lbl = New("TextLabel",{
+		Size=UDim2.new(1,2,1,2),Position=UDim2.new(0,-1,0,-1),
+		BackgroundTransparency=1,
+		Text="R",
+		TextColor3=Color3.fromRGB(255,255,255),
+		TextSize=math.floor(size*0.85),
+		Font=Enum.Font.GothamBlack,
+		TextXAlignment=Enum.TextXAlignment.Center,
+		TextYAlignment=Enum.TextYAlignment.Center,
+		ZIndex=(zindex or 3)+1, Parent=frame
+	})
+	New("UIGradient",{
+		Color=ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(255,255,255)),
+			ColorSequenceKeypoint.new(0.6, Color3.fromRGB(210,210,210)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(140,140,140)),
+		}),
+		Rotation=135, Parent=lbl
+	})
+	return frame
+end
+
+-- ═══════════════════════════════════════════════════════════
+--  LOADING SCREEN  (grid & glow FULLSCREEN)
+-- ═══════════════════════════════════════════════════════════
+local loadGui = New("ScreenGui",{Name="RilzHubLoad",ResetOnSpawn=false,Parent=CoreGui})
+local loadBg  = New("Frame",{
+	Size=UDim2.new(1,0,1,0),
+	BackgroundColor3=T.Bg,
+	BorderSizePixel=0, Parent=loadGui
+})
+
+-- Grid fullscreen (kotak-kotak sampai pinggir)
+for i=1,20 do
+	New("Frame",{Size=UDim2.new(1,0,0,1),Position=UDim2.new(0,0,i/21,0),
+		BackgroundColor3=T.Accent,BackgroundTransparency=0.87,BorderSizePixel=0,Parent=loadBg})
+end
+for i=1,30 do
+	New("Frame",{Size=UDim2.new(0,1,1,0),Position=UDim2.new(i/31,0,0,0),
+		BackgroundColor3=T.Accent,BackgroundTransparency=0.87,BorderSizePixel=0,Parent=loadBg})
+end
+
+-- Glow orbs fullscreen
+for _,cfg in ipairs({
+	{pos=UDim2.new(0.15,0,0.2,0),  col=T.Accent2, size=350, tr=0.85},
+	{pos=UDim2.new(0.85,0,0.8,0),  col=T.Teal,    size=320, tr=0.87},
+	{pos=UDim2.new(0.5,0,0.5,0),   col=T.Accent,  size=450, tr=0.89},
+	{pos=UDim2.new(0.08,0,0.85,0), col=T.Accent,  size=230, tr=0.91},
+	{pos=UDim2.new(0.92,0,0.12,0), col=T.Accent2, size=230, tr=0.91},
+}) do
+	local orb = New("Frame",{
+		Size=UDim2.new(0,cfg.size,0,cfg.size),
+		Position=cfg.pos, AnchorPoint=Vector2.new(0.5,0.5),
+		BackgroundColor3=cfg.col, BackgroundTransparency=cfg.tr,
+		BorderSizePixel=0, Parent=loadBg
+	})
+	New("UICorner",{CornerRadius=UDim.new(1,0),Parent=orb})
+end
+
+-- Load Card di tengah
+local loadCard = New("Frame",{
+	Size=UDim2.new(0,300,0,168),
+	Position=UDim2.new(0.5,-150,0.5,-84),
+	BackgroundColor3=T.Surface,
+	BackgroundTransparency=0.08,
+	BorderSizePixel=0, Parent=loadBg
+})
+New("UICorner",{CornerRadius=UDim.new(0,18),Parent=loadCard})
+New("UIStroke",{Color=T.BorderHi,Thickness=1,Transparency=0.35,Parent=loadCard})
+
+local topAcc = New("Frame",{Size=UDim2.new(0,0,0,2),Position=UDim2.new(0.5,0,0,0),
+	AnchorPoint=Vector2.new(0.5,0),BackgroundColor3=T.Accent,BorderSizePixel=0,Parent=loadCard})
+New("UICorner",{CornerRadius=UDim.new(0,1),Parent=topAcc})
+New("UIGradient",{Color=ColorSequence.new({
+	ColorSequenceKeypoint.new(0,   T.Accent2),
+	ColorSequenceKeypoint.new(0.5, T.Accent),
+	ColorSequenceKeypoint.new(1,   T.Teal),
+}), Parent=topAcc})
+Tween(topAcc,{Size=UDim2.new(1,0,0,2)},0.6,Enum.EasingStyle.Quart)
+
+-- Logo R di loading
+local loadLogoR = MakeRLogo(loadCard, 36, 4)
+loadLogoR.Position = UDim2.new(0,14,0,18)
+
+New("TextLabel",{
+	Size=UDim2.new(1,-58,0,42),Position=UDim2.new(0,56,0,14),
+	BackgroundTransparency=1, Text="RilzHub",
+	TextColor3=T.Accent, TextSize=30,
+	Font=Enum.Font.GothamBlack,
+	TextXAlignment=Enum.TextXAlignment.Left,
+	Parent=loadCard
+})
+New("UIGradient",{
+	Color=ColorSequence.new({
+		ColorSequenceKeypoint.new(0, T.Accent2),
+		ColorSequenceKeypoint.new(1, T.Accent),
+	}),
+	Rotation=45,
+	Parent=loadCard:FindFirstChildOfClass("TextLabel")
+})
+New("TextLabel",{
+	Size=UDim2.new(1,0,0,16),Position=UDim2.new(0,0,0,62),
+	BackgroundTransparency=1, Text="INTERFACE SYSTEM",
+	TextColor3=T.Muted, TextSize=10,
+	Font=Enum.Font.Code, Parent=loadCard
+})
+
+local progBg = New("Frame",{
+	Size=UDim2.new(0.78,0,0,5),Position=UDim2.new(0.11,0,0,100),
+	BackgroundColor3=T.Surface2,BorderSizePixel=0,Parent=loadCard
+})
+New("UICorner",{CornerRadius=UDim.new(1,0),Parent=progBg})
+local progFill = New("Frame",{Size=UDim2.new(0,0,1,0),BackgroundColor3=T.Accent,BorderSizePixel=0,Parent=progBg})
+New("UICorner",{CornerRadius=UDim.new(1,0),Parent=progFill})
+New("UIGradient",{
+	Color=ColorSequence.new({ColorSequenceKeypoint.new(0,T.Accent2),ColorSequenceKeypoint.new(1,T.Accent)}),
+	Parent=progFill
+})
+local progLbl = New("TextLabel",{
+	Size=UDim2.new(1,0,0,14),Position=UDim2.new(0,0,0,112),
+	BackgroundTransparency=1, Text="Initializing...",
+	TextColor3=T.Muted, TextSize=9, Font=Enum.Font.Code,
+	Parent=loadCard
+})
+
+-- ═══════════════════════════════════════════════════════════
+--  MAIN WINDOW
+-- ═══════════════════════════════════════════════════════════
+local gui = New("ScreenGui",{
+	Name="RilzHubUI", ResetOnSpawn=false,
+	ZIndexBehavior=Enum.ZIndexBehavior.Sibling, Parent=CoreGui
+})
+
+local win = New("Frame",{
+	Size=UDim2.new(0,580,0,415),
+	Position=UDim2.new(0.5,-290,0.5,-207),
+	BackgroundColor3=T.Bg,
+	BorderSizePixel=0, Visible=false, Parent=gui
+})
+New("UICorner",{CornerRadius=UDim.new(0,16),Parent=win})
+New("UIStroke",{Color=T.BorderHi,Thickness=1,Transparency=0.5,Parent=win})
+
+New("ImageLabel",{
+	Size=UDim2.new(1,60,1,60),Position=UDim2.new(0,-30,0,-22),
+	BackgroundTransparency=1,
+	Image="rbxassetid://6014261993",
+	ImageColor3=Color3.fromRGB(0,0,0),
+	ImageTransparency=0.45,
+	ScaleType=Enum.ScaleType.Slice,
+	SliceCenter=Rect.new(49,49,450,450),
+	ZIndex=-1, Parent=win
+})
+
+for _,cfg in ipairs({
+	{pos=UDim2.new(0,0,0,0),     col=T.Accent2, size=200, tr=0.93},
+	{pos=UDim2.new(1,0,1,0),     col=T.Teal,    size=180, tr=0.94},
+	{pos=UDim2.new(0.5,0,0.5,0), col=T.Accent,  size=250, tr=0.96},
+}) do
+	local orb = New("Frame",{
+		Size=UDim2.new(0,cfg.size,0,cfg.size),
+		Position=cfg.pos, AnchorPoint=Vector2.new(0.5,0.5),
+		BackgroundColor3=cfg.col, BackgroundTransparency=cfg.tr,
+		BorderSizePixel=0, ZIndex=0, Parent=win
+	})
+	New("UICorner",{CornerRadius=UDim.new(1,0),Parent=orb})
+end
+
+New("ImageLabel",{
+	Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,
+	Image="rbxassetid://9968344285",ImageTransparency=0.97,
+	ScaleType=Enum.ScaleType.Tile,TileSize=UDim2.new(0,128,0,128),
+	ZIndex=0, Parent=win
+})
+
+-- ── TOPBAR ────────────────────────────────────────────────
+local topbar = New("Frame",{
+	Size=UDim2.new(1,0,0,54),BackgroundColor3=T.Surface,
+	BackgroundTransparency=0.1,BorderSizePixel=0,ZIndex=2,Parent=win
+})
+New("UICorner",{CornerRadius=UDim.new(0,16),Parent=topbar})
+New("Frame",{Size=UDim2.new(1,0,0.5,0),Position=UDim2.new(0,0,0.5,0),
+	BackgroundColor3=T.Surface,BackgroundTransparency=0.1,BorderSizePixel=0,ZIndex=2,Parent=topbar})
+
+local gline = New("Frame",{
+	Size=UDim2.new(1,0,0,2),BackgroundColor3=T.Accent,BorderSizePixel=0,ZIndex=3,Parent=topbar
+})
+New("UICorner",{CornerRadius=UDim.new(0,1),Parent=gline})
+New("UIGradient",{Color=ColorSequence.new({
+	ColorSequenceKeypoint.new(0,   T.Accent2),
+	ColorSequenceKeypoint.new(0.45,T.Accent),
+	ColorSequenceKeypoint.new(1,   T.Teal),
+}), Parent=gline})
+
+-- Logo R di topbar (kiri)
+local topLogoR = MakeRLogo(topbar, 30, 3)
+topLogoR.Position = UDim2.new(0,12,0.5,-15)
+
+-- Nama RilzHub
+New("TextLabel",{
+	Size=UDim2.new(0,110,1,0),Position=UDim2.new(0,48,0,0),
+	BackgroundTransparency=1,Text="RilzHub",
+	TextColor3=T.Text,TextSize=16,Font=Enum.Font.GothamBlack,
+	TextXAlignment=Enum.TextXAlignment.Left,ZIndex=3,Parent=topbar
+})
+
+-- Logo R kecil di pojok kanan nama (badge)
+local topRightLogo = MakeRLogo(topbar, 20, 3)
+topRightLogo.Position = UDim2.new(0,160,0.5,-10)
+
+New("TextLabel",{
+	Size=UDim2.new(0,150,1,0),Position=UDim2.new(0,184,0,0),
+	BackgroundTransparency=1,Text="│  Interface v2.0",
+	TextColor3=T.Muted,TextSize=11,Font=Enum.Font.Gotham,
+	TextXAlignment=Enum.TextXAlignment.Left,ZIndex=3,Parent=topbar
+})
+
+-- Ping
+local pingBadge = New("Frame",{
+	Size=UDim2.new(0,54,0,20),Position=UDim2.new(1,-170,0.5,-10),
+	BackgroundColor3=T.Surface2,BorderSizePixel=0,ZIndex=3,Parent=topbar
+})
+New("UICorner",{CornerRadius=UDim.new(1,0),Parent=pingBadge})
+New("UIStroke",{Color=T.Border,Thickness=1,Parent=pingBadge})
+New("Frame",{Size=UDim2.new(0,6,0,6),Position=UDim2.new(0,7,0.5,-3),
+	BackgroundColor3=T.Success,BorderSizePixel=0,ZIndex=4,Parent=pingBadge})
+	:FindFirstChildOfClass("UICorner") or New("UICorner",{CornerRadius=UDim.new(1,0),
+	Parent=pingBadge:FindFirstChild("Frame") or pingBadge})
+local pingDotF = New("Frame",{Size=UDim2.new(0,6,0,6),Position=UDim2.new(0,7,0.5,-3),
+	BackgroundColor3=T.Success,BorderSizePixel=0,ZIndex=4,Parent=pingBadge})
+New("UICorner",{CornerRadius=UDim.new(1,0),Parent=pingDotF})
+New("TextLabel",{Size=UDim2.new(1,-16,1,0),Position=UDim2.new(0,16,0,0),
+	BackgroundTransparency=1,Text="24ms",TextColor3=T.Success,TextSize=9,Font=Enum.Font.Code,
+	TextXAlignment=Enum.TextXAlignment.Left,ZIndex=4,Parent=pingBadge})
+
+-- Window buttons
+local function winBtn(xOff, col, sym)
+	local f = New("Frame",{
+		Size=UDim2.new(0,22,0,22),Position=UDim2.new(1,xOff,0.5,-11),
+		BackgroundColor3=col,BackgroundTransparency=0.7,BorderSizePixel=0,ZIndex=3,Parent=topbar
+	})
+	New("UICorner",{CornerRadius=UDim.new(1,0),Parent=f})
+	local lbl = New("TextLabel",{
+		Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text=sym,TextColor3=col,
+		TextSize=11,Font=Enum.Font.GothamBold,TextTransparency=0.5,ZIndex=4,Parent=f
+	})
+	local btn = New("TextButton",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text="",ZIndex=5,Parent=f})
+	btn.MouseEnter:Connect(function()
+		Tween(f,{BackgroundTransparency=0.05},0.12)
+		Tween(lbl,{TextTransparency=0},0.12)
+	end)
+	btn.MouseLeave:Connect(function()
+		Tween(f,{BackgroundTransparency=0.7},0.12)
+		Tween(lbl,{TextTransparency=0.5},0.12)
+	end)
+	return btn, f
+end
+
+local closeBtn, closeBtnF = winBtn(-34, T.Danger, "✕")
+local minBtn,   minBtnF   = winBtn(-62, T.Warn,   "─")
+
+-- ══════════════════════════════════════════════════════════
+--  MINIMIZED PILL  (gaya dari gambar: drag icon | R logo | nama GUI)
+-- ══════════════════════════════════════════════════════════
+local pill = New("Frame",{
+	Size=UDim2.new(0,200,0,52),Position=UDim2.new(0,16,1,-68),
+	BackgroundColor3=T.Surface,BorderSizePixel=0,Visible=false,Parent=gui
+})
+New("UICorner",{CornerRadius=UDim.new(0,14),Parent=pill})
+local pillStroke = New("UIStroke",{Color=T.PillBorder,Thickness=2,Transparency=0.1,Parent=pill})
+
+New("ImageLabel",{
+	Size=UDim2.new(1,24,1,24),Position=UDim2.new(0,-12,0,-10),
+	BackgroundTransparency=1,Image="rbxassetid://6014261993",
+	ImageColor3=Color3.fromRGB(0,0,0),ImageTransparency=0.55,
+	ScaleType=Enum.ScaleType.Slice,SliceCenter=Rect.new(49,49,450,450),
+	ZIndex=-1,Parent=pill
+})
+
+-- Accent line atas pill
+local pillLine = New("Frame",{Size=UDim2.new(1,0,0,2),BackgroundColor3=T.Accent,BorderSizePixel=0,Parent=pill})
+New("UICorner",{CornerRadius=UDim.new(0,1),Parent=pillLine})
+New("UIGradient",{Color=ColorSequence.new({
+	ColorSequenceKeypoint.new(0,   T.Accent2),
+	ColorSequenceKeypoint.new(0.5, T.Accent),
+	ColorSequenceKeypoint.new(1,   T.Teal),
+}), Parent=pillLine})
+
+-- Drag icon kiri (⊕) persis seperti gambar
+New("TextLabel",{
+	Size=UDim2.new(0,36,1,0),Position=UDim2.new(0,0,0,0),
+	BackgroundTransparency=1,Text="⊕",TextColor3=T.Muted,TextSize=18,
+	Font=Enum.Font.GothamBold,ZIndex=3,Parent=pill
+})
+
+-- Garis separator vertikal
+New("Frame",{Size=UDim2.new(0,1,0.55,0),Position=UDim2.new(0,38,0.225,0),
+	BackgroundColor3=T.Border,BorderSizePixel=0,ZIndex=3,Parent=pill})
+
+-- Logo R di pill (menggantikan logo "F" di gambar)
+local pillLogoR = MakeRLogo(pill, 26, 3)
+pillLogoR.Position = UDim2.new(0,44,0.5,-13)
+
+-- Nama GUI (bukan "Show/Hide", tapi nama GUI = "RilzHub")
+New("TextLabel",{
+	Size=UDim2.new(1,-78,1,0),Position=UDim2.new(0,78,0,0),
+	BackgroundTransparency=1,Text="RilzHub",
+	TextColor3=T.Text,TextSize=13,Font=Enum.Font.GothamBlack,
+	TextXAlignment=Enum.TextXAlignment.Left,ZIndex=3,Parent=pill
+})
+
+-- Pill drag
+local pillDrag, pillStartM, pillStartP = false, nil, nil
+pill.InputBegan:Connect(function(i)
+	if i.UserInputType == Enum.UserInputType.MouseButton1 then
+		pillDrag=true; pillStartM=i.Position; pillStartP=pill.Position
+	end
+end)
+pill.InputEnded:Connect(function(i)
+	if i.UserInputType == Enum.UserInputType.MouseButton1 then pillDrag=false end
+end)
+UserInputService.InputChanged:Connect(function(i)
+	if pillDrag and i.UserInputType == Enum.UserInputType.MouseMovement then
+		local d = i.Position - pillStartM
+		pill.Position = UDim2.new(pillStartP.X.Scale, pillStartP.X.Offset+d.X,
+								  pillStartP.Y.Scale, pillStartP.Y.Offset+d.Y)
+	end
+end)
+
+-- ── MINIMIZE / EXPAND ─────────────────────────────────────
+local minimized = false
+
+local function doMinimize()
+	minimized = true
+	win.Visible = false
+	pill.Size   = UDim2.new(0,0,0,52)
+	pill.BackgroundTransparency = 1
+	pill.Visible = true
+	Tween(pill, {Size=UDim2.new(0,200,0,52), BackgroundTransparency=0}, 0.32, Enum.EasingStyle.Back)
+end
+
+local function doExpand()
+	minimized = false
+	pill.Visible = false
+	win.Size    = UDim2.new(0,580,0,0)
+	win.Visible = true
+	Tween(win, {Size=UDim2.new(0,580,0,415)}, 0.35, Enum.EasingStyle.Back)
+end
+
+minBtn.MouseButton1Click:Connect(doMinimize)
+
+local pillBtn = New("TextButton",{
+	Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text="",ZIndex=10,Parent=pill
+})
+pillBtn.MouseButton1Click:Connect(doExpand)
+
+closeBtn.MouseButton1Click:Connect(function()
+	Tween(win,{Size=UDim2.new(0,580,0,0),BackgroundTransparency=1},0.22)
+	task.delay(0.25, function() gui:Destroy() end)
+end)
+
+UserInputService.InputBegan:Connect(function(i,p)
+	if p then return end
+	if i.KeyCode == Enum.KeyCode.RightShift then
+		if minimized then doExpand() else doMinimize() end
+	end
+end)
+
+-- ── DRAG window ───────────────────────────────────────────
+local drag, startM, startP = false, nil, nil
+topbar.InputBegan:Connect(function(i)
+	if i.UserInputType == Enum.UserInputType.MouseButton1 then
+		drag=true; startM=Vector2.new(i.Position.X,i.Position.Y); startP=win.Position
+	end
+end)
+UserInputService.InputEnded:Connect(function(i)
+	if i.UserInputType == Enum.UserInputType.MouseButton1 then drag=false end
+end)
+UserInputService.InputChanged:Connect(function(i)
+	if drag and i.UserInputType == Enum.UserInputType.MouseMovement then
+		local d = Vector2.new(i.Position.X,i.Position.Y) - startM
+		win.Position = UDim2.new(startP.X.Scale, startP.X.Offset+d.X,
+								 startP.Y.Scale, startP.Y.Offset+d.Y)
+	end
+end)
+
+-- ═══════════════════════════════════════════════════════════
+--  SIDEBAR
+-- ═══════════════════════════════════════════════════════════
+local sidebar = New("Frame",{
+	Size=UDim2.new(0,148,1,-54),Position=UDim2.new(0,0,0,54),
+	BackgroundColor3=T.Surface,BackgroundTransparency=0.1,
+	BorderSizePixel=0,ZIndex=2,Parent=win
+})
+New("UICorner",{CornerRadius=UDim.new(0,16),Parent=sidebar})
+New("Frame",{Size=UDim2.new(0.5,0,0.5,0),Position=UDim2.new(0.5,0,0,0),
+	BackgroundColor3=T.Surface,BackgroundTransparency=0.1,BorderSizePixel=0,ZIndex=2,Parent=sidebar})
+New("Frame",{Size=UDim2.new(1,0,0.5,0),
+	BackgroundColor3=T.Surface,BackgroundTransparency=0.1,BorderSizePixel=0,ZIndex=2,Parent=sidebar})
+New("Frame",{Size=UDim2.new(0,1,1,0),Position=UDim2.new(1,-1,0,0),
+	BackgroundColor3=T.Border,BorderSizePixel=0,ZIndex=3,Parent=sidebar})
+
+-- User card sidebar
+local userCard = New("Frame",{
+	Size=UDim2.new(1,-14,0,58),Position=UDim2.new(0,7,1,-65),
+	BackgroundColor3=T.Surface2,BorderSizePixel=0,ZIndex=3,Parent=sidebar
+})
+New("UICorner",{CornerRadius=UDim.new(0,12),Parent=userCard})
+New("UIStroke",{Color=T.Border,Thickness=1,Parent=userCard})
+
+local ucAv = New("Frame",{
+	Size=UDim2.new(0,32,0,32),Position=UDim2.new(0,10,0.5,-16),
+	BackgroundColor3=T.Accent2,BorderSizePixel=0,ZIndex=4,Parent=userCard
+})
+New("UICorner",{CornerRadius=UDim.new(1,0),Parent=ucAv})
+New("UIGradient",{Color=ColorSequence.new({
+	ColorSequenceKeypoint.new(0,T.Accent2),ColorSequenceKeypoint.new(1,T.Accent)
+}), Rotation=135,Parent=ucAv})
+New("UIStroke",{Color=T.BorderHi,Thickness=1.5,Parent=ucAv})
+
+local ok2, url2 = pcall(function()
+	return Players:GetUserThumbnailAsync(LocalPlayer.UserId,
+		Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
+end)
+if ok2 and url2 then
+	local img2 = New("ImageLabel",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Image=url2,ZIndex=5,Parent=ucAv})
+	New("UICorner",{CornerRadius=UDim.new(1,0),Parent=img2})
+else
+	New("TextLabel",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,
+		Text=string.sub(LocalPlayer.Name,1,1):upper(),
+		TextColor3=T.White,TextSize=14,Font=Enum.Font.GothamBold,ZIndex=5,Parent=ucAv})
+end
+
+local onDot2 = New("Frame",{
+	Size=UDim2.new(0,8,0,8),Position=UDim2.new(0,30,0.5,-2),
+	BackgroundColor3=T.Success,BorderSizePixel=0,ZIndex=5,Parent=userCard
+})
+New("UICorner",{CornerRadius=UDim.new(1,0),Parent=onDot2})
+New("UIStroke",{Color=T.Surface2,Thickness=1.5,Parent=onDot2})
+
+New("TextLabel",{
+	Size=UDim2.new(1,-50,0,16),Position=UDim2.new(0,48,0,9),
+	BackgroundTransparency=1,Text=LocalPlayer.Name,
+	TextColor3=T.Text,TextSize=11,Font=Enum.Font.GothamBold,
+	TextXAlignment=Enum.TextXAlignment.Left,ZIndex=4,Parent=userCard
+})
+New("TextLabel",{
+	Size=UDim2.new(1,-50,0,13),Position=UDim2.new(0,48,0,26),
+	BackgroundTransparency=1,Text="PREMIUM  ·  ACTIVE",
+	TextColor3=T.Muted,TextSize=8,Font=Enum.Font.Code,
+	TextXAlignment=Enum.TextXAlignment.Left,ZIndex=4,Parent=userCard
+})
+
+-- Tab scroll
+local tabScroll = New("ScrollingFrame",{
+	Size=UDim2.new(1,0,1,-74),Position=UDim2.new(0,0,0,8),
+	BackgroundTransparency=1,BorderSizePixel=0,
+	ScrollBarThickness=0,CanvasSize=UDim2.new(0,0,0,0),
+	AutomaticCanvasSize=Enum.AutomaticSize.Y,ZIndex=3,Parent=sidebar
+})
+New("UIListLayout",{Padding=UDim.new(0,3),Parent=tabScroll})
+New("UIPadding",{PaddingLeft=UDim.new(0,7),PaddingRight=UDim.new(0,7),Parent=tabScroll})
+
+-- Content area
+local content = New("Frame",{
+	Size=UDim2.new(1,-148,1,-54),Position=UDim2.new(0,148,0,54),
+	BackgroundTransparency=1,ClipsDescendants=false,ZIndex=2,Parent=win
+})
+
+-- ═══════════════════════════════════════════════════════════
+--  TAB SYSTEM
+-- ═══════════════════════════════════════════════════════════
+local activeTab = nil
+
+local function createTab(name, icon)
+	local tabBtn = New("Frame",{
+		Size=UDim2.new(1,0,0,36),BackgroundColor3=T.Surface2,
+		BackgroundTransparency=1,BorderSizePixel=0,ZIndex=3,Parent=tabScroll
+	})
+	New("UICorner",{CornerRadius=UDim.new(0,10),Parent=tabBtn})
+
+	local ind = New("Frame",{
+		Size=UDim2.new(0,3,0,20),Position=UDim2.new(0,0,0.5,-10),
+		BackgroundColor3=T.Accent,BackgroundTransparency=1,BorderSizePixel=0,ZIndex=4,Parent=tabBtn
+	})
+	New("UICorner",{CornerRadius=UDim.new(0,2),Parent=ind})
+
+	if icon then
+		New("TextLabel",{
+			Size=UDim2.new(0,20,1,0),Position=UDim2.new(0,10,0,0),
+			BackgroundTransparency=1,Text=icon,TextColor3=T.Muted,TextSize=13,
+			Font=Enum.Font.GothamBold,ZIndex=4,Parent=tabBtn
+		})
+	end
+
+	local lbl = New("TextLabel",{
+		Size=UDim2.new(1,-36,1,0),Position=UDim2.new(0,icon and 30 or 12,0,0),
+		BackgroundTransparency=1,Text=name,TextColor3=T.Muted,
+		TextSize=12,Font=Enum.Font.GothamSemibold,
+		TextXAlignment=Enum.TextXAlignment.Left,ZIndex=4,Parent=tabBtn
+	})
+
+	-- BUGFIX: ScrollingFrame dengan padding bawah supaya item terakhir tidak terpotong
+	local scroll = New("ScrollingFrame",{
+		Size=UDim2.new(1,-14,1,-14),Position=UDim2.new(0,10,0,10),
+		BackgroundTransparency=1,BorderSizePixel=0,
+		ScrollBarThickness=3,ScrollBarImageColor3=T.Border,
+		CanvasSize=UDim2.new(0,0,0,0),
+		AutomaticCanvasSize=Enum.AutomaticSize.Y,
+		Visible=false,ZIndex=3,Parent=content
+	})
+	New("UIListLayout",{Padding=UDim.new(0,6),Parent=scroll})
+	New("UIPadding",{PaddingBottom=UDim.new(0,12),Parent=scroll})
+
+	local tab = {btn=tabBtn,lbl=lbl,ind=ind,scroll=scroll}
+
+	local cb = New("TextButton",{
+		Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text="",ZIndex=5,Parent=tabBtn
+	})
+	cb.MouseButton1Click:Connect(function()
+		if activeTab then
+			Tween(activeTab.btn,{BackgroundTransparency=1},0.15)
+			Tween(activeTab.lbl,{TextColor3=T.Muted},0.15)
+			Tween(activeTab.ind,{BackgroundTransparency=1},0.15)
+			activeTab.scroll.Visible=false
+		end
+		Tween(tabBtn,{BackgroundTransparency=0.55},0.15)
+		Tween(lbl,{TextColor3=T.Accent},0.15)
+		Tween(ind,{BackgroundTransparency=0},0.15)
+		scroll.Visible=true; activeTab=tab
+	end)
+	cb.MouseEnter:Connect(function()
+		if activeTab~=tab then Tween(tabBtn,{BackgroundTransparency=0.82},0.12) end
+	end)
+	cb.MouseLeave:Connect(function()
+		if activeTab~=tab then Tween(tabBtn,{BackgroundTransparency=1},0.12) end
+	end)
+	return tab
+end
+
+local function activateFirst(tab)
+	tab.btn.BackgroundTransparency=0.55
+	tab.lbl.TextColor3=T.Accent
+	tab.ind.BackgroundTransparency=0
+	tab.scroll.Visible=true
+	activeTab=tab
+end
+
+-- ═══════════════════════════════════════════════════════════
+--  ELEMENT HELPERS
+-- ═══════════════════════════════════════════════════════════
+local function C(parent, h)
+	local f = New("Frame",{
+		Size=UDim2.new(1,0,0,h or 46),BackgroundColor3=T.Surface,
+		BorderSizePixel=0,ZIndex=3,Parent=parent
+	})
+	New("UICorner",{CornerRadius=UDim.new(0,11),Parent=f})
+	New("UIStroke",{Color=T.Border,Thickness=1,Parent=f})
+	New("UIPadding",{PaddingLeft=UDim.new(0,13),PaddingRight=UDim.new(0,13),Parent=f})
+	New("UIGradient",{Color=ColorSequence.new({
+		ColorSequenceKeypoint.new(0,Color3.fromRGB(20,28,50)),
+		ColorSequenceKeypoint.new(1,Color3.fromRGB(11,15,28)),
+	}), Rotation=135,Parent=f})
+	return f
+end
+
+local function L(p,txt,col,sz,font,xa,pos,size)
+	return New("TextLabel",{
+		Size=size or UDim2.new(1,0,1,0),
+		Position=pos or UDim2.new(0,0,0,0),
+		BackgroundTransparency=1,Text=txt,
+		TextColor3=col or T.Text,TextSize=sz or 12,
+		Font=font or Enum.Font.GothamSemibold,
+		TextXAlignment=xa or Enum.TextXAlignment.Left,
+		ZIndex=4,Parent=p
+	})
+end
+
+local function Sec(parent, text)
+	local h = New("Frame",{Size=UDim2.new(1,0,0,22),BackgroundTransparency=1,ZIndex=3,Parent=parent})
+	New("UIPadding",{PaddingLeft=UDim.new(0,2),Parent=h})
+	New("Frame",{Size=UDim2.new(1,-60,0,1),Position=UDim2.new(0,58,0.5,0),
+		BackgroundColor3=T.Border,BorderSizePixel=0,ZIndex=3,Parent=h})
+	New("TextLabel",{Size=UDim2.new(0,55,1,0),BackgroundTransparency=1,Text=text,
+		TextColor3=T.Muted,TextSize=9,Font=Enum.Font.Code,
+		TextXAlignment=Enum.TextXAlignment.Left,ZIndex=4,Parent=h})
+end
+
+local function Div(parent)
+	local d = New("Frame",{Size=UDim2.new(1,0,0,1),BackgroundColor3=T.Border,BorderSizePixel=0,ZIndex=3,Parent=parent})
+	New("UIGradient",{
+		Color=ColorSequence.new({
+			ColorSequenceKeypoint.new(0,Color3.new(0,0,0)),
+			ColorSequenceKeypoint.new(0.3,Color3.new(1,1,1)),
+			ColorSequenceKeypoint.new(0.7,Color3.new(1,1,1)),
+			ColorSequenceKeypoint.new(1,Color3.new(0,0,0)),
+		}),
+		Transparency=NumberSequence.new({
+			NumberSequenceKeypoint.new(0,1),
+			NumberSequenceKeypoint.new(0.3,0.6),
+			NumberSequenceKeypoint.new(0.7,0.6),
+			NumberSequenceKeypoint.new(1,1),
+		}),Parent=d
+	})
+end
+
+local function addToggle(parent, title, desc, on)
+	local h = desc and 56 or 46
+	local c = C(parent, h)
+	L(c, title, T.Text, 12, Enum.Font.GothamSemibold, nil,
+		UDim2.new(0,0,0,desc and 8 or 0), UDim2.new(0.65,0,0,20))
+	if desc then L(c, desc, T.Muted, 10, Enum.Font.Gotham, nil, UDim2.new(0,0,0,26), UDim2.new(0.65,0,0,18)) end
+	local isOn = on or false
+
+	local track = New("Frame",{
+		Size=UDim2.new(0,46,0,25),Position=UDim2.new(1,-46,0.5,-12),
+		BackgroundColor3=isOn and T.Accent or T.Surface2,BorderSizePixel=0,ZIndex=4,Parent=c
+	})
+	New("UICorner",{CornerRadius=UDim.new(1,0),Parent=track})
+	New("UIStroke",{Color=isOn and T.Accent or T.Border,Thickness=1,Parent=track})
+	local knob = New("Frame",{
+		Size=UDim2.new(0,19,0,19),
+		Position=isOn and UDim2.new(1,-22,0.5,-9) or UDim2.new(0,3,0.5,-9),
+		BackgroundColor3=T.White,BorderSizePixel=0,ZIndex=5,Parent=track
+	})
+	New("UICorner",{CornerRadius=UDim.new(1,0),Parent=knob})
+	local sk = track:FindFirstChildOfClass("UIStroke")
+	local btn = New("TextButton",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text="",ZIndex=6,Parent=c})
+	btn.MouseButton1Click:Connect(function()
+		isOn=not isOn
+		Tween(track,{BackgroundColor3=isOn and T.Accent or T.Surface2},0.18)
+		Tween(sk,{Color=isOn and T.Accent or T.Border},0.18)
+		Tween(knob,{Position=isOn and UDim2.new(1,-22,0.5,-9) or UDim2.new(0,3,0.5,-9)},0.22,Enum.EasingStyle.Back)
+	end)
+end
+
+local function addSlider(parent, title, pct, color)
+	local c = C(parent, 58)
+	local tr = New("Frame",{Size=UDim2.new(1,0,0,22),Position=UDim2.new(0,0,0,7),BackgroundTransparency=1,ZIndex=4,Parent=c})
+	L(tr, title, T.Text, 12, Enum.Font.GothamSemibold, nil, nil, UDim2.new(0.65,0,1,0))
+	local vl = New("TextLabel",{Size=UDim2.new(0.35,0,1,0),Position=UDim2.new(0.65,0,0,0),
+		BackgroundTransparency=1,Text=tostring(math.floor(pct*100)),
+		TextColor3=color or T.Accent,TextSize=11,Font=Enum.Font.Code,
+		TextXAlignment=Enum.TextXAlignment.Right,ZIndex=4,Parent=tr})
+	local track = New("Frame",{Size=UDim2.new(1,0,0,6),Position=UDim2.new(0,0,0,36),
+		BackgroundColor3=T.Surface2,BorderSizePixel=0,ZIndex=4,Parent=c})
+	New("UICorner",{CornerRadius=UDim.new(1,0),Parent=track})
+	New("UIStroke",{Color=T.Border,Thickness=1,Parent=track})
+	local fill = New("Frame",{Size=UDim2.new(pct,0,1,0),BackgroundColor3=color or T.Accent,BorderSizePixel=0,ZIndex=5,Parent=track})
+	New("UICorner",{CornerRadius=UDim.new(1,0),Parent=fill})
+	New("UIGradient",{Color=ColorSequence.new({
+		ColorSequenceKeypoint.new(0,T.Accent2),ColorSequenceKeypoint.new(1,color or T.Accent)
+	}),Parent=fill})
+	local knob = New("Frame",{Size=UDim2.new(0,14,0,14),Position=UDim2.new(pct,-7,0.5,-7),
+		BackgroundColor3=T.White,BorderSizePixel=0,ZIndex=6,Parent=track})
+	New("UICorner",{CornerRadius=UDim.new(1,0),Parent=knob})
+	New("UIStroke",{Color=color or T.Accent,Thickness=1.5,Parent=knob})
+	local dragging = false
+	local sb = New("TextButton",{Size=UDim2.new(1,0,0,22),Position=UDim2.new(0,0,0,-8),
+		BackgroundTransparency=1,Text="",ZIndex=7,Parent=track})
+	sb.MouseButton1Down:Connect(function(x)
+		dragging=true
+		local p=math.clamp((x-track.AbsolutePosition.X)/track.AbsoluteSize.X,0,1)
+		fill.Size=UDim2.new(p,0,1,0); knob.Position=UDim2.new(p,-7,0.5,-7)
+		vl.Text=tostring(math.floor(p*100))
+	end)
+	UserInputService.InputChanged:Connect(function(i)
+		if dragging and i.UserInputType==Enum.UserInputType.MouseMovement then
+			local p=math.clamp((i.Position.X-track.AbsolutePosition.X)/track.AbsoluteSize.X,0,1)
+			fill.Size=UDim2.new(p,0,1,0); knob.Position=UDim2.new(p,-7,0.5,-7)
+			vl.Text=tostring(math.floor(p*100))
+		end
+	end)
+	UserInputService.InputEnded:Connect(function(i)
+		if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end
+	end)
+end
+
+local function addTextbox(parent, title, placeholder)
+	local c = C(parent, 64)
+	L(c, title, T.Text, 12, Enum.Font.GothamSemibold, nil, UDim2.new(0,0,0,7), UDim2.new(1,0,0,18))
+	local bg = New("Frame",{Size=UDim2.new(1,0,0,30),Position=UDim2.new(0,0,0,28),
+		BackgroundColor3=T.Surface2,BorderSizePixel=0,ZIndex=4,Parent=c})
+	New("UICorner",{CornerRadius=UDim.new(0,8),Parent=bg})
+	local sk = New("UIStroke",{Color=T.Border,Thickness=1,Parent=bg})
+	local box = New("TextBox",{Size=UDim2.new(1,-14,1,0),Position=UDim2.new(0,8,0,0),
+		BackgroundTransparency=1,Text="",PlaceholderText=placeholder or "Type...",
+		TextColor3=T.Text,PlaceholderColor3=T.Muted,TextSize=11,Font=Enum.Font.Gotham,
+		TextXAlignment=Enum.TextXAlignment.Left,ClearTextOnFocus=true,ZIndex=5,Parent=bg})
+	box.Focused:Connect(function() Tween(sk,{Color=T.Accent},0.18) end)
+	box.FocusLost:Connect(function() Tween(sk,{Color=T.Border},0.18) end)
+end
+
+-- BUGFIX dropdown: list pakai parent=gui & posisi absolut supaya tidak tertutup
+local function addDropdown(parent, title, options, default)
+	local c = C(parent, 46)
+	L(c, title, T.Text, 12, Enum.Font.GothamSemibold, nil, nil, UDim2.new(0.5,0,1,0))
+	local sel = default or (options and options[1]) or "Select"
+	local open = false
+
+	local display = New("Frame",{Size=UDim2.new(0,145,0,30),Position=UDim2.new(1,-145,0.5,-15),
+		BackgroundColor3=T.Surface2,BorderSizePixel=0,ZIndex=4,Parent=c})
+	New("UICorner",{CornerRadius=UDim.new(0,8),Parent=display})
+	New("UIStroke",{Color=T.Border,Thickness=1,Parent=display})
+	local selLbl = New("TextLabel",{Size=UDim2.new(1,-26,1,0),Position=UDim2.new(0,9,0,0),
+		BackgroundTransparency=1,Text=sel,TextColor3=T.Accent,TextSize=11,
+		Font=Enum.Font.GothamSemibold,TextXAlignment=Enum.TextXAlignment.Left,ZIndex=5,Parent=display})
+	New("TextLabel",{Size=UDim2.new(0,22,1,0),Position=UDim2.new(1,-24,0,0),
+		BackgroundTransparency=1,Text="▾",TextColor3=T.Muted,TextSize=11,
+		Font=Enum.Font.Gotham,ZIndex=5,Parent=display})
+
+	-- List pakai parent=gui dengan ZIndex tinggi (BUGFIX utama)
+	local listF = New("Frame",{
+		Size=UDim2.new(0,145,0,0),Position=UDim2.new(0,0,0,0),
+		BackgroundColor3=T.Surface,BorderSizePixel=0,
+		ClipsDescendants=true,ZIndex=200,Visible=false,Parent=gui
+	})
+	New("UICorner",{CornerRadius=UDim.new(0,10),Parent=listF})
+	New("UIStroke",{Color=T.BorderHi,Thickness=1,Transparency=0.4,Parent=listF})
+	New("UIListLayout",{Padding=UDim.new(0,2),Parent=listF})
+	New("UIPadding",{PaddingTop=UDim.new(0,5),PaddingBottom=UDim.new(0,5),Parent=listF})
+
+	for _,opt in ipairs(options or {}) do
+		local ob = New("TextButton",{Size=UDim2.new(1,-8,0,28),Position=UDim2.new(0,4,0,0),
+			BackgroundColor3=T.Surface2,BackgroundTransparency=1,BorderSizePixel=0,
+			Text=opt,TextColor3=opt==sel and T.Accent or T.Text,
+			TextSize=11,Font=Enum.Font.GothamSemibold,ZIndex=201,Parent=listF})
+		New("UICorner",{CornerRadius=UDim.new(0,7),Parent=ob})
+		ob.MouseEnter:Connect(function() Tween(ob,{BackgroundTransparency=0.65},0.1) end)
+		ob.MouseLeave:Connect(function() Tween(ob,{BackgroundTransparency=1},0.1) end)
+		ob.MouseButton1Click:Connect(function()
+			sel=opt; selLbl.Text=opt; open=false
+			for _,ch in ipairs(listF:GetChildren()) do
+				if ch:IsA("TextButton") then ch.TextColor3 = ch.Text==sel and T.Accent or T.Text end
+			end
+			Tween(listF,{Size=UDim2.new(0,145,0,0)},0.18)
+			task.delay(0.2, function() listF.Visible=false end)
+		end)
+	end
+
+	local ob2 = New("TextButton",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text="",ZIndex=6,Parent=display})
+	ob2.MouseButton1Click:Connect(function()
+		open=not open
+		if open then
+			local ap = display.AbsolutePosition
+			local as = display.AbsoluteSize
+			local oh = #(options or {})*30+10
+			listF.Position = UDim2.new(0, ap.X, 0, ap.Y + as.Y + 4)
+			listF.Size = UDim2.new(0,145,0,0)
+			listF.Visible = true
+			Tween(listF,{Size=UDim2.new(0,145,0,oh)},0.28,Enum.EasingStyle.Back)
+		else
+			Tween(listF,{Size=UDim2.new(0,145,0,0)},0.18)
+			task.delay(0.2,function() listF.Visible=false end)
+		end
+	end)
+end
+
+-- COLOR PICKER dengan palette warna
+local function addColorPicker(parent, title, currentColor, onChanged)
+	local c = C(parent, 46)
+	L(c, title, T.Text, 12, Enum.Font.GothamSemibold, nil, nil, UDim2.new(1,-80,1,0))
+
+	local colorVal = currentColor or T.Accent
+	local prev = New("Frame",{Size=UDim2.new(0,68,0,30),Position=UDim2.new(1,-68,0.5,-15),
+		BackgroundColor3=colorVal,BorderSizePixel=0,ZIndex=4,Parent=c})
+	New("UICorner",{CornerRadius=UDim.new(0,8),Parent=prev})
+	New("UIStroke",{Color=T.Border,Thickness=1,Parent=prev})
+	local hexLbl = New("TextLabel",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,
+		Text=string.format("#%02X%02X%02X",
+			math.floor(colorVal.R*255),math.floor(colorVal.G*255),math.floor(colorVal.B*255)),
+		TextColor3=T.White,TextSize=9,Font=Enum.Font.Code,ZIndex=5,Parent=prev})
+
+	-- Palette popup (parent=gui supaya tidak tertutup)
+	local palette = New("Frame",{
+		Size=UDim2.new(0,228,0,0),Position=UDim2.new(0,0,0,0),
+		BackgroundColor3=T.Surface,BorderSizePixel=0,
+		ClipsDescendants=true,ZIndex=200,Visible=false,Parent=gui
+	})
+	New("UICorner",{CornerRadius=UDim.new(0,12),Parent=palette})
+	New("UIStroke",{Color=T.BorderHi,Thickness=1,Transparency=0.3,Parent=palette})
+
+	local colors = {
+		Color3.fromRGB(60,140,255),  Color3.fromRGB(0,120,255),   Color3.fromRGB(0,80,220),
+		Color3.fromRGB(110,60,240),  Color3.fromRGB(140,80,255),  Color3.fromRGB(180,50,220),
+		Color3.fromRGB(0,215,190),   Color3.fromRGB(0,180,160),   Color3.fromRGB(0,150,130),
+		Color3.fromRGB(255,70,100),  Color3.fromRGB(220,40,70),   Color3.fromRGB(180,30,50),
+		Color3.fromRGB(6,210,155),   Color3.fromRGB(50,200,100),  Color3.fromRGB(0,170,80),
+		Color3.fromRGB(255,200,80),  Color3.fromRGB(255,150,50),  Color3.fromRGB(255,100,30),
+		Color3.fromRGB(180,190,210), Color3.fromRGB(220,232,252), Color3.fromRGB(255,255,255),
+	}
+
+	local grd = New("Frame",{
+		Size=UDim2.new(1,-10,1,-10),Position=UDim2.new(0,5,0,5),
+		BackgroundTransparency=1,ZIndex=201,Parent=palette
+	})
+	New("UIGridLayout",{CellSize=UDim2.new(0,28,0,28),CellPadding=UDim2.new(0,4,0,4),Parent=grd})
+
+	for _,col in ipairs(colors) do
+		local cb = New("TextButton",{
+			Size=UDim2.new(0,28,0,28),BackgroundColor3=col,
+			BorderSizePixel=0,Text="",ZIndex=202,Parent=grd
+		})
+		New("UICorner",{CornerRadius=UDim.new(0,7),Parent=cb})
+		cb.MouseButton1Click:Connect(function()
+			colorVal = col
+			prev.BackgroundColor3 = col
+			hexLbl.Text = string.format("#%02X%02X%02X",
+				math.floor(col.R*255),math.floor(col.G*255),math.floor(col.B*255))
+			Tween(palette,{Size=UDim2.new(0,228,0,0)},0.18)
+			task.delay(0.2,function() palette.Visible=false end)
+			if onChanged then onChanged(col) end
+		end)
+	end
+
+	local paletteOpen = false
+	local prevBtn = New("TextButton",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text="",ZIndex=6,Parent=prev})
+	prevBtn.MouseButton1Click:Connect(function()
+		paletteOpen = not paletteOpen
+		if paletteOpen then
+			local ap = prev.AbsolutePosition
+			local as = prev.AbsoluteSize
+			local rows = math.ceil(#colors/7)
+			local ph = rows * 32 + 10
+			palette.Position = UDim2.new(0, ap.X - 160, 0, ap.Y + as.Y + 4)
+			palette.Size = UDim2.new(0,228,0,0)
+			palette.Visible = true
+			Tween(palette,{Size=UDim2.new(0,228,0,ph)},0.28,Enum.EasingStyle.Back)
+		else
+			Tween(palette,{Size=UDim2.new(0,228,0,0)},0.18)
+			task.delay(0.2,function() palette.Visible=false end)
+		end
+	end)
+end
+
+local function addButton(parent, title, btype)
+	local cols = {Primary=T.Surface,Default=T.Surface2,Danger=T.Danger}
+	local c = C(parent, 42)
+	c.BackgroundColor3 = cols[btype] or T.Surface2
+	if btype=="Primary" then
+		New("UIGradient",{Color=ColorSequence.new({
+			ColorSequenceKeypoint.new(0,T.Accent2),ColorSequenceKeypoint.new(1,T.Accent)
+		}), Rotation=90,Parent=c})
+	elseif btype=="Danger" then
+		New("UIGradient",{Color=ColorSequence.new({
+			ColorSequenceKeypoint.new(0,Color3.fromRGB(180,30,60)),ColorSequenceKeypoint.new(1,T.Danger)
+		}), Rotation=90,Parent=c})
+	end
+	if btype~="Default" then
+		New("UIStroke",{Color=btype=="Primary" and T.Accent or T.Danger,Thickness=1,Parent=c})
+	end
+	New("TextLabel",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text=title,
+		TextColor3=btype=="Default" and T.Text or T.White,TextSize=12,
+		Font=Enum.Font.GothamBold,ZIndex=4,Parent=c})
+	local btn=New("TextButton",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text="",ZIndex=5,Parent=c})
+	btn.MouseEnter:Connect(function() Tween(c,{BackgroundTransparency=0.25},0.12) end)
+	btn.MouseLeave:Connect(function() Tween(c,{BackgroundTransparency=0},0.12) end)
+	btn.MouseButton1Click:Connect(function()
+		local rip=New("Frame",{Size=UDim2.new(0,0,0,0),Position=UDim2.new(0.5,0,0.5,0),
+			AnchorPoint=Vector2.new(0.5,0.5),BackgroundColor3=T.White,
+			BackgroundTransparency=0.7,BorderSizePixel=0,ZIndex=8,Parent=c})
+		New("UICorner",{CornerRadius=UDim.new(1,0),Parent=rip})
+		Tween(rip,{Size=UDim2.new(2.5,0,2.5,0),BackgroundTransparency=1},0.42)
+		task.delay(0.45,function() rip:Destroy() end)
+	end)
+end
+
+-- ═══════════════════════════════════════════════════════════
+--  BUILD TABS (hanya 2 tab sesuai foto: Visual & Settings)
+-- ═══════════════════════════════════════════════════════════
+
+-- ── VISUAL ────────────────────────────────────────────────
+local visualTab = createTab("Visual", "◉")
+activateFirst(visualTab)
+local vs = visualTab.scroll
+
+Sec(vs, "EFFECTS")
+addToggle(vs, "Fullbright", nil, false)
+addToggle(vs, "No Fog",     nil, true)
+addToggle(vs, "Bloom",      nil, false)
+addToggle(vs, "Trails",     nil, false)
+Div(vs)
+Sec(vs, "COLORS")
+
+-- Color picker untuk ganti warna GUI accent
+addColorPicker(vs, "UI Accent", T.Accent, function(col)
+	T.Accent = col
+	Tween(gline,     {BackgroundColor3=col}, 0.3)
+	Tween(pillLine,  {BackgroundColor3=col}, 0.3)
+end)
+addColorPicker(vs, "Text Color",   T.Text,    nil)
+addColorPicker(vs, "Background",   T.Surface, nil)
+addColorPicker(vs, "Danger Color", T.Danger,  nil)
+
+-- Warna border pill (merah default di gambar, bisa diganti)
+addColorPicker(vs, "Pill Border Color", T.PillBorder, function(col)
+	pillStroke.Color = col
+end)
+
+Div(vs)
+Sec(vs, "LEVELS")
+addSlider(vs, "UI Opacity",  1.0, T.Accent)
+addSlider(vs, "Blur Amount", 0.29, T.Teal)
+
+-- ── SETTINGS ──────────────────────────────────────────────
+local settingsTab = createTab("Settings", "⚙")
+local ss = settingsTab.scroll
+
+Sec(ss, "PREFERENCES")
+addToggle(ss, "Save Config",   "Auto-save on close", true)
+addToggle(ss, "Auto-Update",   "Check on launch",    true)
+addToggle(ss, "Keybind Hints", nil,                  false)
+addToggle(ss, "Sound FX",      nil,                  true)
+Div(ss)
+addTextbox(ss,  "Config Name", "Default...")
+addDropdown(ss, "Theme",    {"Dark","Midnight","Neon","Light"},          "Midnight")
+addDropdown(ss, "Language", {"English","Indonesian","French","Spanish"}, "French")
+Div(ss)
+Sec(ss, "ACTIONS")
+addButton(ss, "Save Config",    "Primary")
+addButton(ss, "Reset Defaults", "Default")
+addButton(ss, "Clear Cache",    "Danger")
+Div(ss)
+New("TextLabel",{Size=UDim2.new(1,0,0,26),BackgroundTransparency=1,
+	Text="RilzHub v2.0  ·  RightShift to toggle",
+	TextColor3=T.Muted,TextSize=9,Font=Enum.Font.Code,ZIndex=3,Parent=ss})
+
+-- ═══════════════════════════════════════════════════════════
+--  LAUNCH
+-- ═══════════════════════════════════════════════════════════
+local loadSteps = {
+	{t="Loading assets...",  p=0.28},
+	{t="Building layout...", p=0.60},
+	{t="Applying theme...",  p=0.84},
+	{t="Done.",              p=1.00},
+}
+
+local function runLoad(i, cb)
+	if i > #loadSteps then task.wait(0.15); cb(); return end
+	local s = loadSteps[i]
+	progLbl.Text = s.t
+	Tween(progFill, {Size=UDim2.new(s.p,0,1,0)}, 0.35)
+	task.delay(0.4, function() runLoad(i+1, cb) end)
+end
+
+task.delay(0.25, function()
+	runLoad(1, function()
+		Tween(loadBg,{BackgroundTransparency=1},0.35)
+		task.delay(0.38, function()
+			loadGui:Destroy()
+			win.Visible = true
+			win.Size = UDim2.new(0,580,0,0)
+			Tween(win, {Size=UDim2.new(0,580,0,415)}, 0.38, Enum.EasingStyle.Back)
+		end)
+	end)
+end)
+
+-- ═══════════════════════════════════════════════════════════
+--  LIBRARY API (supaya bisa di-require dari script lain)
+-- ═══════════════════════════════════════════════════════════
+function RilzHub:AddTab(name, icon)        return createTab(name, icon)            end
+function RilzHub:AddToggle(p,t,d,v)        addToggle(p,t,d,v)                      end
+function RilzHub:AddSlider(p,t,pct,col)    addSlider(p,t,pct,col)                  end
+function RilzHub:AddTextbox(p,t,ph)        addTextbox(p,t,ph)                      end
+function RilzHub:AddDropdown(p,t,opts,def) addDropdown(p,t,opts,def)               end
+function RilzHub:AddColorPicker(p,t,c,cb)  addColorPicker(p,t,c,cb)               end
+function RilzHub:AddButton(p,t,btype)      addButton(p,t,btype)                    end
+function RilzHub:AddSection(p,text)        Sec(p,text)                             end
+function RilzHub:AddDivider(p)             Div(p)                                  end
+
+return RilzHub
